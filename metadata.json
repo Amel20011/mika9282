@@ -1,0 +1,6 @@
+{
+  "name": "Aurelia Cathērine",
+  "description": "Premium digital marketplace and automated services portal with manual QRIS deposit verification, instant balance transactions, and dedicated administrator control center.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
