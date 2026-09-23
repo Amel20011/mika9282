@@ -307,7 +307,7 @@ export default function AdminProductsPage() {
               </div>
             )}
 
-            <form onSubmit={handleSave} className="space-y-3.5">
+            <form onSubmit={handleSave} noValidate className="space-y-3.5">
               <div>
                 <label className="block text-slate-300 font-semibold mb-1">
                   Nama Produk:

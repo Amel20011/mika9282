@@ -16,6 +16,7 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { useUser } from '@/components/customer/CustomerLayoutShell';
+import { safeFetchJson } from '@/lib/client-api';
 
 interface TicketItem {
   id: string;
@@ -47,9 +48,8 @@ export default function CustomerSupportPage() {
 
   const fetchTickets = useCallback(async () => {
     try {
-      const res = await fetch('/api/support');
-      const data = await res.json();
-      if (data.tickets) setTickets(data.tickets);
+      const res = await safeFetchJson<{ tickets: TicketItem[] }>('/api/support');
+      if (res.ok && res.data?.tickets) setTickets(res.data.tickets);
     } catch (err) {
       console.error('Fetch support tickets error:', err);
     } finally {
@@ -76,16 +76,17 @@ export default function CustomerSupportPage() {
       if (file) {
         const formData = new FormData();
         formData.append('file', file);
-        const uploadRes = await fetch('/api/upload', {
+        const uploadRes = await safeFetchJson<{ url: string; error?: string }>('/api/upload', {
           method: 'POST',
           body: formData,
         });
-        const uploadData = await uploadRes.json();
-        if (!uploadRes.ok) throw new Error(uploadData.error || 'Gagal mengunggah lampiran.');
-        attachmentUrl = uploadData.url;
+        if (!uploadRes.ok || !uploadRes.data?.url) {
+          throw new Error(uploadRes.error || 'Gagal mengunggah lampiran.');
+        }
+        attachmentUrl = uploadRes.data.url;
       }
 
-      const res = await fetch('/api/support', {
+      const res = await safeFetchJson<{ ticketId: string; error?: string }>('/api/support', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -95,9 +96,8 @@ export default function CustomerSupportPage() {
         }),
       });
 
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Gagal membuat tiket bantuan.');
+      if (!res.ok || !res.data) {
+        throw new Error(res.error || 'Gagal membuat tiket bantuan.');
       }
 
       setIsModalOpen(false);
@@ -105,7 +105,7 @@ export default function CustomerSupportPage() {
       setMessage('');
       setFile(null);
       await fetchTickets();
-      router.push(`/support/${data.ticketId}`);
+      router.push(`/support/${res.data.ticketId}`);
     } catch (err: unknown) {
       setFormError(err instanceof Error ? err.message : 'Terjadi kegagalan.');
     } finally {
@@ -256,7 +256,7 @@ export default function CustomerSupportPage() {
               </div>
             )}
 
-            <form onSubmit={handleCreateTicket} className="mt-4 space-y-4 text-xs">
+            <form onSubmit={handleCreateTicket} noValidate className="mt-4 space-y-4 text-xs">
               <div>
                 <label className="block font-semibold uppercase text-slate-700 mb-1">
                   Subjek Bantuan

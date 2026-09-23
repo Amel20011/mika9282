@@ -352,7 +352,7 @@ export default function AdminBalancesPage() {
               </span>
             </div>
 
-            <form onSubmit={handleAdjust} className="space-y-4">
+            <form onSubmit={handleAdjust} noValidate className="space-y-4">
               <div>
                 <label className="block text-slate-300 font-semibold mb-1.5">
                   Jenis Penyesuaian Saldo:

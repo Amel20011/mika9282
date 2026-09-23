@@ -159,7 +159,7 @@ export default function AdminNotificationsPage() {
             </div>
           )}
 
-          <form onSubmit={handleSend} className="space-y-3.5 text-xs">
+          <form onSubmit={handleSend} noValidate className="space-y-3.5 text-xs">
             <div>
               <label className="block text-slate-300 font-semibold mb-1">
                 Target Penerima:

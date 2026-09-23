@@ -359,7 +359,7 @@ export default function AdminTransactionsPage() {
               Pengembalian dana akan <strong>mengembalikan saldo penuh</strong> kepada akun pengguna, mengubah status transaksi menjadi <code>refunded</code>, dan mencatat transaksi mutasi kredit pada Buku Kas.
             </p>
 
-            <form onSubmit={handleProcessRefund} className="space-y-3">
+            <form onSubmit={handleProcessRefund} noValidate className="space-y-3">
               <div>
                 <label className="block text-slate-300 font-semibold mb-1">
                   Alasan Refund (Wajib):

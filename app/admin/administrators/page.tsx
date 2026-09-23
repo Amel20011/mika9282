@@ -220,7 +220,7 @@ export default function AdminStaffPage() {
               </div>
             )}
 
-            <form onSubmit={handleCreate} className="space-y-3.5">
+            <form onSubmit={handleCreate} noValidate className="space-y-3.5">
               <div>
                 <label className="block text-slate-300 font-semibold mb-1">
                   Nama Lengkap Staf:

@@ -12,6 +12,7 @@ import {
   Trash2,
   LogOut,
 } from 'lucide-react';
+import { safeFetchJson } from '@/lib/client-api';
 
 interface SessionItem {
   id: string;
@@ -36,9 +37,8 @@ export default function CustomerSecurityPage() {
 
   const fetchSessions = useCallback(async () => {
     try {
-      const res = await fetch('/api/auth/sessions');
-      const data = await res.json();
-      if (data.sessions) setSessions(data.sessions);
+      const res = await safeFetchJson<{ sessions: SessionItem[] }>('/api/auth/sessions');
+      if (res.ok && res.data?.sessions) setSessions(res.data.sessions);
     } catch (err) {
       console.error(err);
     } finally {
@@ -68,7 +68,7 @@ export default function CustomerSecurityPage() {
     setUpdatingPass(true);
 
     try {
-      const res = await fetch('/api/auth/change-password', {
+      const res = await safeFetchJson('/api/auth/change-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -78,8 +78,7 @@ export default function CustomerSecurityPage() {
         }),
       });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Gagal mengubah kata sandi.');
+      if (!res.ok) throw new Error(res.error || 'Gagal mengubah kata sandi.');
 
       setPassSuccess('Kata sandi berhasil diperbarui.');
       setCurrentPassword('');
@@ -158,7 +157,7 @@ export default function CustomerSecurityPage() {
           </div>
         )}
 
-        <form onSubmit={handleChangePassword} className="space-y-3.5 text-xs">
+        <form onSubmit={handleChangePassword} noValidate className="space-y-3.5 text-xs">
           <div>
             <label className="block font-semibold uppercase text-slate-700 mb-1">
               Kata Sandi Saat Ini

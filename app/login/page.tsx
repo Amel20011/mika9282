@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { LogIn, ArrowRight, ShieldCheck, AlertCircle, Sparkles } from 'lucide-react';
 import { useUser } from '@/components/customer/CustomerLayoutShell';
+import { safeFetchJson, sanitizeErrorMessage } from '@/lib/client-api';
 
 export default function CustomerLoginPage() {
   const router = useRouter();
@@ -21,21 +22,20 @@ export default function CustomerLoginPage() {
     setLoading(true);
 
     try {
-      const res = await fetch('/api/auth/login', {
+      const res = await safeFetchJson<{ error?: string }>('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ identifier, password }),
       });
 
-      const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || 'Gagal masuk akun.');
+        throw new Error(res.error || 'Gagal masuk akun.');
       }
 
       await refreshUser();
       router.push('/');
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Terjadi kegagalan saat proses masuk.');
+      setError(sanitizeErrorMessage(err, 'Terjadi kegagalan saat proses masuk.'));
     } finally {
       setLoading(false);
     }
@@ -72,7 +72,7 @@ export default function CustomerLoginPage() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} noValidate className="space-y-4">
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1.5">
                 Username atau Email

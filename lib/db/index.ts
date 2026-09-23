@@ -2,24 +2,47 @@ import { DatabaseSync } from 'node:sqlite';
 import path from 'node:path';
 import fs from 'node:fs';
 
-const dataDir = path.join(process.cwd(), 'data');
-if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir, { recursive: true });
+function getDatabaseFilePath(): string {
+  try {
+    const dataDir = path.join(process.cwd(), 'data');
+    if (!fs.existsSync(dataDir)) {
+      fs.mkdirSync(dataDir, { recursive: true });
+    }
+    return path.join(dataDir, 'aurelia_catherine.db');
+  } catch {
+    // Read-only filesystem fallback (e.g. Vercel / serverless environment)
+    const tmpDir = path.join('/tmp', 'data');
+    try {
+      if (!fs.existsSync(tmpDir)) {
+        fs.mkdirSync(tmpDir, { recursive: true });
+      }
+      return path.join(tmpDir, 'aurelia_catherine.db');
+    } catch {
+      return path.join('/tmp', 'aurelia_catherine.db');
+    }
+  }
 }
 
-const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
+try {
+  const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+} catch {
+  // Ignored in read-only / serverless environment
 }
-
-const dbPath = path.join(dataDir, 'aurelia_catherine.db');
 
 let dbInstance: DatabaseSync | null = null;
 
 export function getDb(): DatabaseSync {
   if (!dbInstance) {
+    const dbPath = getDatabaseFilePath();
     dbInstance = new DatabaseSync(dbPath);
-    dbInstance.exec('PRAGMA journal_mode = WAL;');
+    try {
+      dbInstance.exec('PRAGMA journal_mode = WAL;');
+    } catch {
+      // WAL not supported in all storage environments
+    }
     dbInstance.exec('PRAGMA foreign_keys = ON;');
     initializeDatabase(dbInstance);
   }

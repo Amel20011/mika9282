@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { useUser } from '@/components/customer/CustomerLayoutShell';
 import { formatRupiah } from '@/lib/format';
+import { safeFetchJson } from '@/lib/client-api';
 
 interface Category {
   id: string;
@@ -67,14 +68,12 @@ export default function CustomerHomePage() {
     async function loadData() {
       try {
         const [catRes, prodRes] = await Promise.all([
-          fetch('/api/categories'),
-          fetch('/api/products'),
+          safeFetchJson<{ categories: Category[] }>('/api/categories'),
+          safeFetchJson<{ products: Product[] }>('/api/products'),
         ]);
-        const catData = await catRes.json();
-        const prodData = await prodRes.json();
 
-        if (catData.categories) setCategories(catData.categories);
-        if (prodData.products) setProducts(prodData.products);
+        if (catRes.ok && catRes.data?.categories) setCategories(catRes.data.categories);
+        if (prodRes.ok && prodRes.data?.products) setProducts(prodRes.data.products);
       } catch (err) {
         console.error('Failed to load marketplace data:', err);
       } finally {
@@ -109,21 +108,20 @@ export default function CustomerHomePage() {
     setPurchaseError(null);
 
     try {
-      const res = await fetch('/api/purchase', {
+      const res = await safeFetchJson<{ orderNumber: string; newBalance: number; error?: string }>('/api/purchase', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ productId: activeProduct.id, quantity: 1 }),
       });
 
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Pembelian gagal diproses.');
+      if (!res.ok || !res.data) {
+        throw new Error(res.error || 'Pembelian gagal diproses.');
       }
 
-      updateLocalBalance(data.newBalance);
+      updateLocalBalance(res.data.newBalance);
       setPurchaseSuccess({
-        orderNumber: data.orderNumber,
-        newBalance: data.newBalance,
+        orderNumber: res.data.orderNumber,
+        newBalance: res.data.newBalance,
         deliveryInfo: activeProduct.deliveryInfo,
       });
       await refreshUser();

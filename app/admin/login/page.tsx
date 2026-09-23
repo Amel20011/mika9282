@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Shield, Lock, AlertCircle, LogIn, Sparkles, ExternalLink } from 'lucide-react';
+import { safeFetchJson, sanitizeErrorMessage } from '@/lib/client-api';
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -18,20 +19,19 @@ export default function AdminLoginPage() {
     setError(null);
 
     try {
-      const res = await fetch('/api/admin/auth/login', {
+      const res = await safeFetchJson('/api/admin/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ identifier, password }),
       });
 
-      const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || 'Autentikasi administrator gagal.');
+        throw new Error(res.error || 'Autentikasi administrator gagal.');
       }
 
       router.push('/admin/dashboard');
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Terjadi kegagalan saat proses masuk admin.');
+      setError(sanitizeErrorMessage(err, 'Terjadi kegagalan saat proses masuk admin.'));
     } finally {
       setLoading(false);
     }
@@ -79,7 +79,7 @@ export default function AdminLoginPage() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4 text-xs">
+          <form onSubmit={handleSubmit} noValidate className="space-y-4 text-xs">
             <div>
               <label className="block font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
                 Username / Email Administrator

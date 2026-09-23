@@ -16,6 +16,7 @@ import {
   FileCheck,
 } from 'lucide-react';
 import { useUser } from '@/components/customer/CustomerLayoutShell';
+import { safeFetchJson } from '@/lib/client-api';
 
 interface SupportMessage {
   id: string;
@@ -56,11 +57,10 @@ export default function CustomerTicketDetailPage() {
 
   const fetchTicket = useCallback(async () => {
     try {
-      const res = await fetch(`/api/support/${ticketId}`);
-      if (!res.ok) throw new Error('Tiket tidak ditemukan.');
-      const data = await res.json();
-      setTicket(data.ticket);
-      setMessages(data.messages);
+      const res = await safeFetchJson<{ ticket: any; messages: SupportMessage[] }>(`/api/support/${ticketId}`);
+      if (!res.ok || !res.data) throw new Error(res.error || 'Tiket tidak ditemukan.');
+      setTicket(res.data.ticket);
+      setMessages(res.data.messages);
     } catch (err) {
       console.error(err);
       setError('Gagal memuat pesan tiket.');
@@ -89,13 +89,12 @@ export default function CustomerTicketDetailPage() {
       if (file) {
         const formData = new FormData();
         formData.append('file', file);
-        const upRes = await fetch('/api/upload', { method: 'POST', body: formData });
-        const upData = await upRes.json();
-        if (!upRes.ok) throw new Error(upData.error || 'Gagal mengunggah berkas.');
-        attachmentUrl = upData.url;
+        const upRes = await safeFetchJson<{ url: string; error?: string }>('/api/upload', { method: 'POST', body: formData });
+        if (!upRes.ok || !upRes.data?.url) throw new Error(upRes.error || 'Gagal mengunggah berkas.');
+        attachmentUrl = upRes.data.url;
       }
 
-      const res = await fetch(`/api/support/${ticketId}`, {
+      const res = await safeFetchJson(`/api/support/${ticketId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -104,8 +103,7 @@ export default function CustomerTicketDetailPage() {
         }),
       });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Gagal mengirim balasan.');
+      if (!res.ok) throw new Error(res.error || 'Gagal mengirim balasan.');
 
       setReplyText('');
       setFile(null);
@@ -232,7 +230,7 @@ export default function CustomerTicketDetailPage() {
           Tiket ini telah ditutup oleh Administrator. Jika masih membutuhkan bantuan, silakan buka tiket baru.
         </div>
       ) : (
-        <form onSubmit={handleSendReply} className="space-y-2">
+        <form onSubmit={handleSendReply} noValidate className="space-y-2">
           {file && (
             <div className="flex items-center space-x-2 rounded-xl bg-sky-50 px-3 py-1.5 text-xs text-sky-700 border border-sky-200">
               <FileCheck className="h-4 w-4" />

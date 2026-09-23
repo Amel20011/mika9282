@@ -4,6 +4,7 @@ import React, { createContext, useContext, useEffect, useState, useCallback } fr
 import { usePathname } from 'next/navigation';
 import { TopNavbar } from './TopNavbar';
 import { BottomNavbar } from './BottomNavbar';
+import { safeFetchJson } from '@/lib/client-api';
 
 export interface UserContextType {
   user: {
@@ -37,15 +38,15 @@ export function CustomerLayoutShell({ children }: { children: React.ReactNode })
 
   const refreshUser = useCallback(async () => {
     try {
-      const res = await fetch('/api/auth/me', { cache: 'no-store' });
-      const data = await res.json();
-      if (data.authenticated && data.user) {
-        setUser(data.user);
+      const res = await safeFetchJson<{ authenticated: boolean; user: UserContextType['user'] }>('/api/auth/me', { cache: 'no-store' });
+      if (res.ok && res.data && res.data.authenticated && res.data.user) {
+        setUser(res.data.user);
       } else {
         setUser(null);
       }
     } catch (err) {
       console.error('Error fetching user:', err);
+      setUser(null);
     } finally {
       setLoading(false);
     }

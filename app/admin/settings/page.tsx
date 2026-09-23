@@ -160,7 +160,7 @@ export default function AdminSettingsPage() {
         </div>
       )}
 
-      <form onSubmit={handleSave} className="space-y-6">
+      <form onSubmit={handleSave} noValidate className="space-y-6">
         {/* Global Kill Switches */}
         <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-5 space-y-4 text-xs">
           <div className="border-b border-slate-800 pb-2">

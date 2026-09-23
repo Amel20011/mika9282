@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { UserPlus, AlertCircle, ShieldCheck } from 'lucide-react';
 import { useUser } from '@/components/customer/CustomerLayoutShell';
+import { safeFetchJson, sanitizeErrorMessage } from '@/lib/client-api';
 
 export default function CustomerRegisterPage() {
   const router = useRouter();
@@ -36,7 +37,7 @@ export default function CustomerRegisterPage() {
     setLoading(true);
 
     try {
-      const res = await fetch('/api/auth/register', {
+      const res = await safeFetchJson<{ error?: string }>('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -49,15 +50,14 @@ export default function CustomerRegisterPage() {
         }),
       });
 
-      const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || 'Gagal mendaftar.');
+        throw new Error(res.error || 'Gagal mendaftar.');
       }
 
       await refreshUser();
       router.push('/');
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Terjadi kegagalan pendaftaran akun.');
+      setError(sanitizeErrorMessage(err, 'Terjadi kegagalan pendaftaran akun.'));
     } finally {
       setLoading(false);
     }
@@ -88,7 +88,7 @@ export default function CustomerRegisterPage() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-3.5">
+          <form onSubmit={handleSubmit} noValidate className="space-y-3.5">
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1">
                 Nama Lengkap

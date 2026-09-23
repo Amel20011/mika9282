@@ -16,6 +16,7 @@ import {
   Package,
 } from 'lucide-react';
 import { formatRupiah } from '@/lib/format';
+import { safeFetchJson } from '@/lib/client-api';
 
 interface Transaction {
   id: string;
@@ -41,11 +42,15 @@ export default function CustomerTransactionsPage() {
     setLoading(true);
     try {
       const url = filterType === 'all' ? '/api/transactions' : `/api/transactions?type=${filterType}`;
-      const res = await fetch(url);
-      const data = await res.json();
-      if (data.transactions) setTransactions(data.transactions);
+      const res = await safeFetchJson<{ transactions: Transaction[] }>(url);
+      if (res.ok && res.data?.transactions) {
+        setTransactions(res.data.transactions);
+      } else {
+        setTransactions([]);
+      }
     } catch (err) {
       console.error('Fetch transactions error:', err);
+      setTransactions([]);
     } finally {
       setLoading(false);
     }

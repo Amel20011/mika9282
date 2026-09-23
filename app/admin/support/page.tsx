@@ -380,7 +380,7 @@ export default function AdminSupportDeskPage() {
                   </div>
                 )}
 
-                <form onSubmit={handleSendReply} className="flex items-center space-x-2">
+                <form onSubmit={handleSendReply} noValidate className="flex items-center space-x-2">
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}

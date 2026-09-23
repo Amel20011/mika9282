@@ -4,6 +4,7 @@ import React, { useState, useRef } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, User, Upload, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useUser } from '@/components/customer/CustomerLayoutShell';
+import { safeFetchJson } from '@/lib/client-api';
 
 export default function CustomerProfilePage() {
   const { user, refreshUser } = useUser();
@@ -28,11 +29,10 @@ export default function CustomerProfilePage() {
     try {
       const formData = new FormData();
       formData.append('file', file);
-      const res = await fetch('/api/upload', { method: 'POST', body: formData });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Gagal mengunggah foto.');
+      const res = await safeFetchJson<{ url: string; error?: string }>('/api/upload', { method: 'POST', body: formData });
+      if (!res.ok || !res.data?.url) throw new Error(res.error || 'Gagal mengunggah foto.');
 
-      setAvatarUrl(data.url);
+      setAvatarUrl(res.data.url);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Gagal mengunggah avatar.');
     } finally {
@@ -47,7 +47,7 @@ export default function CustomerProfilePage() {
     setMessage(null);
 
     try {
-      const res = await fetch('/api/auth/update-profile', {
+      const res = await safeFetchJson('/api/auth/update-profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -57,8 +57,7 @@ export default function CustomerProfilePage() {
         }),
       });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Gagal menyimpan profil.');
+      if (!res.ok) throw new Error(res.error || 'Gagal menyimpan profil.');
 
       setMessage('Profil Anda berhasil diperbarui.');
       await refreshUser();
@@ -136,7 +135,7 @@ export default function CustomerProfilePage() {
           />
         </div>
 
-        <form onSubmit={handleSave} className="space-y-4 text-xs">
+        <form onSubmit={handleSave} noValidate className="space-y-4 text-xs">
           <div>
             <label className="block font-semibold uppercase text-slate-700 mb-1">
               Username (Tetap)
